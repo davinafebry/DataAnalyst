@@ -1,0 +1,363 @@
+---
+title: "Davina Febryanthi Kurniawan UAS Data Analysis"
+author: "Davina Febryanthi Kurniawan"
+date: "12/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+# Import Library
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(corrplot)
+library(nortest)
+library(Metrics)
+
+# Read Data
+mydata <- read.csv("heart_failure_clinical_records_dataset.csv")
+head(mydata)
+str(mydata)
+
+#Sex - Gender of patient Male = 1, Female =0
+#Age - Age of patient
+#Diabetes - 0 = No, 1 = Yes
+#Anaemia - 0 = No, 1 = Yes
+#High_blood_pressure - 0 = No, 1 = Yes
+#Smoking - 0 = No, 1 = Yes
+#DEATH_EVENT - 0 = No, 1 = Yes
+
+## EDA
+#correlations
+correlations <- cor(mydata[,1:13])
+corrplot(correlations, method="circle")
+correlations
+
+# as.factor
+mydata$anaemia <- as.factor(mydata$anaemia)
+mydata$diabetes <- as.factor(mydata$diabetes)
+mydata$high_blood_pressure <- as.factor(mydata$high_blood_pressure)
+mydata$sex <- as.factor(mydata$sex)
+mydata$DEATH_EVENT <- as.factor(mydata$DEATH_EVENT)
+
+# ggplot
+# ggplot persebaran sex dengan death_event
+s_de <- ggplot(data = mydata, mapping = aes(x = sex, y = ..count.., fill = DEATH_EVENT)) + 
+  geom_bar(stat = "count", position='dodge') + 
+  geom_label(stat = "count", aes(label = ..count..)) +
+  labs(title = "Barplot of sex as a function of DEATH_EVENT status") +
+  theme_light()
+s_de + scale_fill_brewer(palette="Reds")
+
+
+# BARPLOT
+
+b1<-ggplot(mydata, aes(x=sex))+geom_bar(fill="indianred3")+ labs(x="Sex")+ theme_minimal(base_size=10)
+
+b2<-ggplot(mydata, aes(x=smoking))+geom_bar(fill="seagreen2")+ labs(x="Smoking")+ theme_minimal(base_size=10)
+
+b3 <-ggplot(mydata, aes(x=DEATH_EVENT))+geom_bar(fill="pink")+ labs(x="Death Event")+ theme_minimal(base_size=10)
+
+# comparing variables and their impact with death event
+p1 <- mydata %>% 
+  select(anaemia, DEATH_EVENT) %>%
+  ggplot(aes(x = anaemia, fill = DEATH_EVENT)) +
+  geom_bar(stat='count', position='dodge', show.legend = FALSE) + 
+  theme_minimal() +
+  labs(x = 'anaemia') +
+  geom_label(stat='count', aes(label=..count..),
+             position=position_dodge(width=0.9), vjust=0.5, show.legend = TRUE)
+p1 + scale_fill_brewer(palette="Purples")
+
+
+p2 <- mydata %>% 
+  select(diabetes, DEATH_EVENT) %>%
+  ggplot(aes(x = diabetes, fill = DEATH_EVENT)) +
+  geom_bar(stat='count', position='dodge', show.legend = TRUE) + 
+  theme_minimal() +
+  labs(x = 'diabetes') +
+  geom_label(stat='count', aes(label=..count..), 
+             position=position_dodge(width=0.9), vjust=0.5, show.legend = TRUE)
+p2 + scale_fill_brewer(palette="Blues")
+
+
+p3 <- mydata %>% 
+  select(high_blood_pressure, DEATH_EVENT) %>%
+  ggplot(aes(x = high_blood_pressure, fill = DEATH_EVENT)) +
+  geom_bar(stat='count', position='dodge', show.legend = FALSE) + 
+  theme_minimal() +
+  labs(x = 'high_blood_pressure') +
+  geom_label(stat='count', aes(label=..count..),
+             position=position_dodge(width=0.9), vjust=0.5, show.legend = TRUE)
+p3 + scale_fill_brewer(palette="Greens")
+
+#data frame
+dat2 <- data.frame(mydata$age,mydata$creatinine_phosphokinase,mydata$ejection_fraction, mydata$platelets, mydata$serum_creatinine, mydata$serum_sodium, mydata$time , mydata$DEATH_EVENT)
+
+str(dat2)
+summary(dat2)
+head(dat2)
+tail(dat2)
+
+##Boxplot
+boxplot(dat2$mydata.age ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Age", ylab = "Age", xlab = "Death Event")
+
+boxplot(dat2$mydata.creatinine_phosphokinase ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Creatinine Phosphokinase", ylab = " Creatinine Phosphokinase", xlab = "Death Event")
+
+boxplot(dat2$mydata.ejection_fraction ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Ejection Fraction", ylab = "Ejection Fraction", xlab = "Death Event")
+
+boxplot(dat2$mydata.platelets ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Platelets", ylab = "Platelets", xlab = "Death Event")
+
+boxplot(dat2$mydata.serum_creatinine ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Serum Creatinine", ylab = "Serum Creatinine", xlab = "Death Event")
+
+boxplot(dat2$mydata.serum_sodium ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Serum Sodium", ylab = "Serum Sodium", xlab = "Death Event")
+
+boxplot(dat2$mydata.time ~ dat2$mydata.DEATH_EVENT, col = c("#A5D3F2", "#DEC7F0"), main = "Boxplot Time", ylab = "Time", xlab = "Death Event")
+
+##Histogram
+
+h1<- ggplot(mydata, aes(x=age))+ geom_histogram(binwidth=5, colour="white", fill="powderblue", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..*5))),colour="deepskyblue", fill="deepskyblue", alpha=0.3)+ scale_x_continuous(breaks=seq(40,100,10))+geom_vline(xintercept = 65, linetype="dashed")+ annotate("text", x=50, y=45, label="Age <65", size=2.5, color="dark blue") + annotate("text", x=80, y=45, label="Age >= 65", size=2.5, color="dark red") +labs(title="Age Distribution") + theme_minimal(base_size = 8)
+h1
+
+h2 <- ggplot(mydata, aes(x=creatinine_phosphokinase))+ geom_histogram(binwidth=100, colour="white", fill="plum", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..*150))),colour="plum1", fill="plum1", alpha=0.3)+ scale_x_continuous(breaks=seq(0,10000,1000))+geom_vline(xintercept = 120, linetype="dashed")+ annotate("text", x=0, y=100, label="CPK Normal", size=2.5, color="dark green") + annotate("text", x=1000, y=80, label="CPK Abnormal", size=2.5, color="dark red")+labs(title="Creatinine Phosphokinase Distribution") + theme_minimal(base_size = 8)
+h2
+
+h3 <- ggplot(mydata, aes(x=ejection_fraction))+ geom_histogram(binwidth=5, colour="white", fill="navajowhite", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..*5))),colour="lightsalmon1", fill="lightsalmon1", alpha=0.3)+ scale_x_continuous(breaks=seq(0,80,10))+geom_vline(xintercept = 40, linetype="dashed")+geom_vline(xintercept = 75, linetype="dashed")+ annotate("text", x=20, y=30, label="Abnormal", size=2.5, color="dark red") + annotate("text", x=50, y=30, label="Normal", color="dark green")+  annotate("text", x=80, y=30, label="Abnormal", size=2.5, color="dark red")+labs(title="Ejection Fraction Distribution") + theme_minimal(base_size = 8)
+h3
+
+h4 <- ggplot(mydata, aes(x=platelets))+ geom_histogram(binwidth=20000, colour="white", fill="lightskyblue2", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..*25000))),colour="lightsteelblue", fill="lightsteelblue", alpha=0.3)+
+  geom_vline(xintercept = 150000, linetype="dashed")+geom_vline(xintercept = 450000, linetype="dashed")+ annotate("text", x=100000, y=30, label="Abnormal", size=2.5, color="dark red") + annotate("text", x=300000, y=30, label="Normal", color="dark green")+  annotate("text", x=500000, y=30, label="Abnormal", size=2.5, color="dark red")+labs(title="Platelets Count") + theme_minimal(base_size = 8)
+h4
+
+h5 <- ggplot(mydata, aes(x=serum_sodium))+ geom_histogram(binwidth=1, colour="white", fill="mediumpurple", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..))),colour="mediumpurple1", fill="mediumpurple1", alpha=0.3)+
+  geom_vline(xintercept = 135, linetype="dashed")+geom_vline(xintercept = 145, linetype="dashed")+ annotate("text", x=130, y=20, label="Abnormal", size=2.5, color="dark red") + annotate("text", x=142, y=20, label="Normal", color="dark green")+  annotate("text", x=148, y=20, label="Abnormal", size=2.5, color="dark red")+labs(title="Serum Sodium") + theme_minimal(base_size = 8)
+h5
+
+
+h6 <- ggplot(mydata, aes(x=serum_creatinine))+ geom_histogram(binwidth=0.2, colour="white", fill="palegreen1", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..*0.2))),colour="palegreen3", fill="palegreen3", alpha=0.3)+
+  geom_vline(xintercept = 0.74, linetype="dashed")+geom_vline(xintercept = 1.35, linetype="dashed")+ annotate("text", x=0.05, y=20, label="Abnormal", size=2.5, color="dark red") + annotate("text", x=1, y=20, label="Normal", color="dark green")+  annotate("text", x=2.5, y=20, label="Abnormal", size=2.5, color="dark red")+labs(title="Serum Creatinine") + theme_minimal(base_size = 8)
+h6
+
+h7<- ggplot(mydata, aes(x=time))+ geom_histogram(binwidth=5, colour="white", fill="pink", alpha=0.8)+
+  geom_density(eval(bquote(aes(y=..count..*5))),colour="lightsalmon", fill="lightsalmon", alpha=0.3) + labs(title="Time (Follow-up period)") + theme_minimal(base_size = 8)
+h7
+
+
+```
+
+
+```{r}
+library(readr)
+library(ggplot2)
+library(GGally)
+library(dplyr)
+library(tidyr)
+
+# Read Data
+mydata <- read.csv("heart_failure_clinical_records_dataset.csv")
+head(mydata)
+str(mydata)
+
+# Make new function for draw confussion matrix
+draw_confusion_matrix <- function(cm) {
+
+  layout(matrix(c(1,1,2)))
+  par(mar=c(2,2,2,2))
+  plot(c(100, 345), c(300, 450), type = "n", xlab="", ylab="", xaxt='n', yaxt='n')
+  title('CONFUSION MATRIX', cex.main=2)
+
+  # create the matrix 
+  rect(150, 430, 240, 370, col='#3F97D0')
+  text(195, 435, 'Class1', cex=1.2)
+  rect(250, 430, 340, 370, col='#F7AD50')
+  text(295, 435, 'Class2', cex=1.2)
+  text(125, 370, 'Predicted', cex=1.3, srt=90, font=2)
+  text(245, 450, 'Actual', cex=1.3, font=2)
+  rect(150, 305, 240, 365, col='#F7AD50')
+  rect(250, 305, 340, 365, col='#3F97D0')
+  text(140, 400, 'Class1', cex=1.2, srt=90)
+  text(140, 335, 'Class2', cex=1.2, srt=90)
+
+  # add in the cm results 
+  res <- as.numeric(cm$table)
+  text(195, 400, res[1], cex=1.6, font=2, col='white')
+  text(195, 335, res[2], cex=1.6, font=2, col='white')
+  text(295, 400, res[3], cex=1.6, font=2, col='white')
+  text(295, 335, res[4], cex=1.6, font=2, col='white')
+
+  # add in the specifics 
+  plot(c(100, 0), c(100, 0), type = "n", xlab="", ylab="", main = "DETAILS", xaxt='n', yaxt='n')
+  text(10, 85, names(cm$byClass[1]), cex=1.2, font=2)
+  text(10, 70, round(as.numeric(cm$byClass[1]), 3), cex=1.2)
+  text(30, 85, names(cm$byClass[2]), cex=1.2, font=2)
+  text(30, 70, round(as.numeric(cm$byClass[2]), 3), cex=1.2)
+  text(50, 85, names(cm$byClass[5]), cex=1.2, font=2)
+  text(50, 70, round(as.numeric(cm$byClass[5]), 3), cex=1.2)
+  text(70, 85, names(cm$byClass[6]), cex=1.2, font=2)
+  text(70, 70, round(as.numeric(cm$byClass[6]), 3), cex=1.2)
+  text(90, 85, names(cm$byClass[7]), cex=1.2, font=2)
+  text(90, 70, round(as.numeric(cm$byClass[7]), 3), cex=1.2)
+
+  # add in the accuracy information 
+  text(30, 35, names(cm$overall[1]), cex=1.5, font=2)
+  text(30, 20, round(as.numeric(cm$overall[1]), 3), cex=1.4)
+  text(70, 35, names(cm$overall[2]), cex=1.5, font=2)
+  text(70, 20, round(as.numeric(cm$overall[2]), 3), cex=1.4)
+}
+
+# as.factor
+mydata$anaemia <- as.factor(mydata$anaemia)
+mydata$diabetes <- as.factor(mydata$diabetes)
+mydata$high_blood_pressure <- as.factor(mydata$high_blood_pressure)
+mydata$sex <- as.factor(mydata$sex)
+mydata$DEATH_EVENT <- as.factor(mydata$DEATH_EVENT)
+
+NIM=47956
+set.seed(NIM)
+samp <- sample(nrow(mydata), 0.8 * nrow(mydata))
+training <- mydata[samp, ]
+testing <- mydata[-samp, ]
+nrow(training)
+nrow(testing)
+
+## LINEAR REGGRESION
+
+lm1 <- glm(DEATH_EVENT ~., data=training, family=binomial)
+summary(lm1)
+
+limp<-varImp(lm1)
+backward<-step(lm1,direction="backward", trace=0)
+
+#install.packages("vip")
+library(vip)
+vi(backward)
+
+p2<- vip(backward,num_features = length(coef(backward)),
+         geom="point", horizontal = TRUE, mapping = aes_string(color="Sign"))
+summary(p2)
+
+glm.t =predict(object=lm1, newdata=testing, type="response")
+presult<- as.factor(ifelse(glm.t>0.5,1,0))
+testing$DEATH_EVENT1<-as.factor(testing$DEATH_EVENT)
+cm1<- confusionMatrix(presult,testing$DEATH_EVENT1)
+draw_confusion_matrix(cm1)
+
+# Mulltiple Linear Reggresion
+mod <- lm(age ~ anaemia + creatinine_phosphokinase + diabetes + ejection_fraction + high_blood_pressure + platelets + serum_creatinine + serum_sodium + sex + smoking + time + DEATH_EVENT, data = mydata)
+summary(mod)
+
+
+# vif test
+car::vif(mod)
+
+
+# Validate the model based on the plot
+library(ggplot2)
+library(ggfortify)
+autoplot(mod, label.size = 3)
+
+```
+
+
+```{r }
+
+# LOGISTIC REGRESSION
+
+# Load Library
+library(readr)
+library(klaR)
+library(caret)
+library(ROCR)
+library(plotROC)
+
+# Read Data
+mydata <- read.csv("heart_failure_clinical_records_dataset.csv")
+head(mydata)
+str(mydata)
+
+# as.factor
+mydata$anaemia <- as.factor(mydata$anaemia)
+mydata$diabetes <- as.factor(mydata$diabetes)
+mydata$high_blood_pressure <- as.factor(mydata$high_blood_pressure)
+mydata$sex <- as.factor(mydata$sex)
+mydata$DEATH_EVENT <- as.factor(mydata$DEATH_EVENT)
+
+NIM=47956
+set.seed(NIM)
+samp <- sample(nrow(mydata), 0.8 * nrow(mydata))
+training <- mydata[samp, ]
+testing <- mydata[-samp, ]
+nrow(training)
+nrow(testing)
+
+mylogit1 <- glm (DEATH_EVENT~., data=training, family = binomial(link="logit"))
+summary(mylogit1)
+
+
+pred <- predict(mylogit1, newdata = testing, type = "response")
+y_pred_num <- ifelse(pred > 0.5, 1, 0)
+y_pred <- factor(y_pred_num, levels=c(0, 1))
+y_act <- testing$DEATH_EVENT
+mean(y_pred == y_act) # kualitas prediksi
+(pred1 = ROCR::prediction(pred, testing$DEATH_EVENT ))
+
+df <- data.frame(predicted_probability=pred,death=testing$DEATH_EVENT)
+df <- arrange(df, predicted_probability)
+df$index <- 1:nrow(df)
+df %>%
+    ggplot()+geom_point(aes(x=index,y=predicted_probability, color=death))  
+
+mylogit_a <- glm (DEATH_EVENT ~ age + time + ejection_fraction, data=training, family = binomial(link="logit"))
+mylogit_a
+summary(mylogit_a)
+
+mylogit_b <- glm (DEATH_EVENT ~ age + time + ejection_fraction + serum_creatinine, data=training, family = binomial(link="logit"))
+mylogit_b
+summary(mylogit_b)
+
+car::vif(mylogit_a)
+car::vif(mylogit_b)
+
+
+#DeathEvent_1 <- as.factor(training$DEATH_EVENT) 
+#nb_mod <- NaiveBayes(DeathEvent_1~age + time + ejection_fraction, data=training)
+#pred <- predict(nb_mod,testing)
+#tab <- table(pred$class,testing$DEATH_EVENT)
+#(model_1 <- caret::confusionMatrix(tab))
+
+glm.t = predict(object=mylogit_a, newdata=testing, type="response")
+presult<- as.factor(ifelse(glm.t>0.5,1,0))
+testing$DEATH_EVENT1<-as.factor(testing$DEATH_EVENT)
+cm2<- confusionMatrix(presult,testing$DEATH_EVENT1)
+draw_confusion_matrix(cm2)
+
+#nb_mod2 <- NaiveBayes(DeathEvent_1~age + time + ejection_fraction + serum_creatinine, data=training)
+#pred2 <- predict(nb_mod2,testing)
+#tab2 <- table(pred2$class,testing$DEATH_EVENT)
+#(model_2 <- caret::confusionMatrix(tab2))
+
+pred = predict(mylogit1,type="response")
+pred1 = ROCR::prediction(pred,training$DEATH_EVENT)
+roc = ROCR::performance(pred1,measure = "tpr",x.measure = "fpr")
+plot(roc, main = "ROC by Davina Febryanthi Kurniawan 47956", colorize = T)
+
+(auc = ROCR::performance(pred1,measure="auc"))
+#A performance instance
+# 'Area under the ROC curve'
+
+```
+
+
+
+
+
